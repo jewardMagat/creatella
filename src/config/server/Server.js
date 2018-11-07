@@ -1,5 +1,6 @@
 import {create} from 'apisauce';
+import {baseURL} from './UserService';
 
 export const api = create({
-  baseURL: 'http://10.10.1.111:3000'
+  baseURL: baseURL
 })
