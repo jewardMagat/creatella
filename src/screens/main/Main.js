@@ -3,41 +3,45 @@ import {View, Image, Alert, FlatList, StyleSheet, Modal} from 'react-native';
 import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card, Footer,
   FooterTab, Button} from 'native-base';
 import {api} from '@config/server/Server';
-import {allProducts, getImage, baseURL} from '@config/server/UserService';
+import {allProducts, getImage, baseURL, sort} from '@config/server/UserService';
 import GridView from 'react-native-super-grid';
 import GridList from 'react-native-grid-list';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {setProducts, setPrefetchedProducts} from '@redux/actions';
 
-const isCloseToBottom = ({layoutMeasurement, contentOffset, contentSize}) => {
-  return layoutMeasurement.height + contentOffset.y >=
-    contentSize.height;
-};
-
 class Main extends React.Component{
   constructor(props){
     super(props);
     this.state={
-      products: [],
-      prefetchedProducts: [],
       page: 0,
       items: 0,
       currentImageID: 0,
       isLoading: true,
-      iterateData: false,
-      isLoadingVisible: false
+      isLoadingVisible: false,
+      isMenuVisible: false,
+      sortOrder: ''
     }
   }
 
-  componentDidMount(){
-    let id = Math.floor(Math.random()*1000);
-    api.get(allProducts + '?_page=1&_limit=10')
+  initialLoad(sortMethod){
+    let order = ''
+    if(sortMethod === ''){
+      order = ''
+    }else{
+      order = `${sort}${sortMethod}`
+    }
+
+    this.props.setProducts([]);
+    this.props.setPrefetchedProducts([]);
+
+    console.log(`${allProducts}?_page=1&_limit=10${order}`)
+    api.get(`${allProducts}?_page=0&_limit=10${order}`)
     .then((response)=>{
       if(response.ok){
         this.props.setProducts(response.data);
 
-        api.get(allProducts + '?_page=2&_limit=10')
+        api.get(`${allProducts}?_page=2&_limit=10${order}`)
         .then((response) => {
           this.props.setPrefetchedProducts(response.data)
           if(response.ok){
@@ -46,8 +50,8 @@ class Main extends React.Component{
               prefetchedProducts: response.data,
               page: 2,
               items: 10,
-              iterateData: true,
-              currentImageID: id
+              isLoadingVisible: false,
+              sortOrder: order
             })
           }else{
             Alert.alert('Server connection error');
@@ -58,6 +62,14 @@ class Main extends React.Component{
       }
     }).catch((error)=>{
       console.log(error)
+    })
+  }
+
+  componentDidMount(){
+    this.initialLoad();
+    let id = Math.floor(Math.random()*1000);
+    this.setState({
+      currentImageID: id
     })
   }
 
@@ -93,7 +105,7 @@ class Main extends React.Component{
       }
     }
 
-    api.get(allProducts + '?_page=' + pageCount + '&_limit=10')
+    api.get(`${allProducts}?_page=${pageCount}&_limit=10${this.state.sortOrder}`)
     .then((response)=>{
       if(response.ok){
         this.props.setPrefetchedProducts(response.data)
@@ -113,6 +125,14 @@ class Main extends React.Component{
     })
   }
 
+  onSort = (order) => {
+    this.setState({
+      isMenuVisible: false,
+      isLoadingVisible: true
+    })
+    this.initialLoad(order)
+  }
+
   render(){
     return(
       <Container>
@@ -128,23 +148,61 @@ class Main extends React.Component{
               <Modal
                 onRequestClose={() => {Alert.alert('Modal has been closed.');}}
                 visible={this.state.isLoadingVisible}
-                transparent={true}
-              >
-              <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-
-              <View style={{flex:0.5, flexDirection: 'row'}}>
+                transparent={true}>
                 <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-                <View style={{flex:4, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center'}}>
-                  <Spinner/>
-                  <Text style={{fontSize: 18}}>Loading...</Text>
+
+                <View style={{flex:0.5, flexDirection: 'row'}}>
+                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                  <View style={{flex:4, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center'}}>
+                    <Spinner/>
+                    <Text style={{fontSize: 18}}>Loading...</Text>
+                  </View>
+                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
                 </View>
+
                 <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-              </View>
-
-              <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-
-
               </Modal>
+
+              <Modal
+                onRequestClose={() => {Alert.alert('Modal has been closed.');}}
+                visible={this.state.isMenuVisible}
+                transparent={true}>
+                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+
+                <View style={{flex:1, flexDirection: 'row'}}>
+                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                  <View style={{flex:5, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 8}}>
+                    <Button
+                      light
+                      full
+                      style={{margintBottom: 8, marginTop: 8}}
+                      onPress={()=>this.onSort('price')}>
+                      <Text>By price</Text>
+                    </Button>
+
+                    <Button
+                      light
+                      full
+                      style={{margintBottom: 8, marginTop: 8}}
+                      onPress={()=>this.onSort('size')}>
+                      <Text>By size</Text>
+                    </Button>
+
+                    <Button
+                      light
+                      full
+                      style={{margintBottom: 8, marginTop: 8}}
+                      onPress={()=>this.onSort('id')}>
+                      <Text>By id</Text>
+                    </Button>
+
+                  </View>
+                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                </View>
+
+                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+              </Modal>
+
               <Header>
                 <Body>
                   <Title>
@@ -152,7 +210,12 @@ class Main extends React.Component{
                   </Title>
                 </Body>
                 <Right>
-                  <Button>
+                  <Button
+                    onPress={()=> {
+                      this.setState({
+                        isMenuVisible: true
+                      })
+                    }}>
                     <Image
                       style={{width: 30, height: 30}}
                       source={require('@assets/sort.png')}
