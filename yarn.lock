@@ -5148,13 +5148,6 @@ react-native-easy-grid@0.2.0:
   dependencies:
     lodash "^4.11.1"
 
-react-native-grid-list@^1.0.9:
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/react-native-grid-list/-/react-native-grid-list-1.0.9.tgz#61eaa6df390b3de4fe1d4eb2ba634958d19b7992"
-  integrity sha1-Yeqm3zkLPeT+HU6yumNJWNGbeZI=
-  dependencies:
-    prop-types "^15.6.0"
-
 react-native-iphone-x-helper@^1.0.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/react-native-iphone-x-helper/-/react-native-iphone-x-helper-1.2.0.tgz#9f8a376eb00bc712115abff4420318a0063fa796"
@@ -5179,14 +5172,6 @@ react-native-screens@^1.0.0-alpha.11:
   version "1.0.0-alpha.16"
   resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-1.0.0-alpha.16.tgz#e3651b7077ea8fa04e8dd3265ad9b87f1f77a758"
   integrity sha512-t+/aq5jQa+Is6afiQHa1P+2UPnwPGY9NT0pSqNr2zQ5llCn8TcPq6GN8xDMuEc08g+y/9R5zWo32hlVStwWn1A==
-
-react-native-super-grid@^2.4.3:
-  version "2.4.3"
-  resolved "https://registry.yarnpkg.com/react-native-super-grid/-/react-native-super-grid-2.4.3.tgz#ceeaa4515de7bdb2e3cc3f810009e1adbbadd40b"
-  integrity sha512-SRYHWSc6EPFlMp4m9ZQ2P6Fqc9GEH+RuO4sc6fhisUcH20TRxFO2OcDeHobIKv7KOarGa7jXdZZ85R+LZisKqA==
-  dependencies:
-    lodash "^4.17.10"
-    prop-types "^15.6.0"
 
 react-native-tab-view@^0.0.77:
   version "0.0.77"
