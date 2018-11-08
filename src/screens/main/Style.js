@@ -67,7 +67,7 @@ export default styles = {
   },
   card: {
     height: 250,
-    width: 180,
+    width: 170,
     padding: 8,
     justifyContent: 'space-between'
   },
