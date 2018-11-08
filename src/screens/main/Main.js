@@ -3,7 +3,7 @@ import {View, Image, Alert, FlatList, StyleSheet} from 'react-native';
 import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card, Footer,
   FooterTab, Button} from 'native-base';
 import {api} from '@config/server/Server';
-import {allProducts, getImage} from '@config/server/UserService';
+import {allProducts, getImage, baseURL} from '@config/server/UserService';
 import GridView from 'react-native-super-grid';
 import GridList from 'react-native-grid-list';
 import {connect} from 'react-redux';
@@ -88,16 +88,6 @@ class Main extends React.Component{
       }
     }
 
-
-    console.log('==============================')
-    console.log(pageCount);
-    console.log(iteratedData);
-    console.log('==============================')
-
-    // this.setState({
-    //   isLoading: true
-    // });
-    //
     api.get(allProducts + '?_page=' + pageCount + '&_limit=10')
     .then((response)=>{
       if(response.ok){
@@ -156,10 +146,10 @@ class Main extends React.Component{
                     But first, a word from our sponsors:
                   </Text>
                 </View>
-                <View style={{marginTop: 8, alignItems: 'center'}}>
+                <View style={{marginTop: 8, marginBottom: 8, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth}}>
                   <Image
-                    style={{width: 100, height: 75}}
-                    source={{uri: `http://10.10.1.111:3000/api/ads/?r=${this.state.currentImageID}`}}
+                    style={{width: 100, height: 75, marginBottom: 8}}
+                    source={{uri: `${baseURL}${getImage}${this.state.currentImageID}`}}
                   />
                 </View>
               </View>
