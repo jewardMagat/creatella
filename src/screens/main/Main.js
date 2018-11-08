@@ -1,11 +1,10 @@
 import React from 'react';
 import {View, Image, Alert, FlatList, StyleSheet, Modal} from 'react-native';
-import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card, Footer,
-  FooterTab, Button} from 'native-base';
+import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card,
+  Button} from 'native-base';
+import styles from './Style';
 import {api} from '@config/server/Server';
 import {allProducts, getImage, baseURL, sort} from '@config/server/UserService';
-import GridView from 'react-native-super-grid';
-import GridList from 'react-native-grid-list';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {setProducts, setPrefetchedProducts} from '@redux/actions';
@@ -20,7 +19,10 @@ class Main extends React.Component{
       isLoading: true,
       isLoadingVisible: false,
       isMenuVisible: false,
-      sortOrder: ''
+      sortOrder: '',
+      maxItems: 0,
+      endOfArray: false,
+      itemLimit: 20
     }
   }
 
@@ -35,31 +37,40 @@ class Main extends React.Component{
     this.props.setProducts([]);
     this.props.setPrefetchedProducts([]);
 
-    console.log(`${allProducts}?_page=1&_limit=10${order}`)
-    api.get(`${allProducts}?_page=0&_limit=10${order}`)
-    .then((response)=>{
-      if(response.ok){
-        this.props.setProducts(response.data);
+    api.get(allProducts)
+    .then(response=>{
+      this.setState({
+        maxItems: response.data.length
+      })
+      api.get(`${allProducts}?_page=0&_limit=${this.state.itemLimit}
+        ${order}`)
+      .then((response)=>{
+        if(response.ok){
+          this.props.setProducts(response.data);
 
-        api.get(`${allProducts}?_page=2&_limit=10${order}`)
-        .then((response) => {
-          this.props.setPrefetchedProducts(response.data)
-          if(response.ok){
-            this.setState({
-              isLoading: false,
-              prefetchedProducts: response.data,
-              page: 2,
-              items: 10,
-              isLoadingVisible: false,
-              sortOrder: order
-            })
-          }else{
-            Alert.alert('Server connection error');
-          }
-        })
-      }else{
-        Alert.alert('Server connection error');
-      }
+          api.get(`${allProducts}?_page=2&_limit=${this.state.itemLimit}
+            ${order}`)
+          .then((response) => {
+            this.props.setPrefetchedProducts(response.data)
+            if(response.ok){
+              this.setState({
+                isLoading: false,
+                prefetchedProducts: response.data,
+                page: 2,
+                items: this.state.itemLimit,
+                isLoadingVisible: false,
+                sortOrder: order
+              })
+            }else{
+              Alert.alert('Server connection error');
+            }
+          })
+        }else{
+          Alert.alert('Server connection error');
+        }
+      }).catch((error)=>{
+        console.log(error)
+      })
     }).catch((error)=>{
       console.log(error)
     })
@@ -76,53 +87,60 @@ class Main extends React.Component{
   onLoadItems = () =>{
     const {products, prefetchedProducts} = this.props.products;
 
-    this.setState({
-      isLoadingVisible: true
-    });
-
-    let currentProd = products;
-    let prefetchedProd = prefetchedProducts;
-
-    this.props.setProducts([]);
-    this.props.setPrefetchedProducts([]);
-
-    let iteratedData = products.concat(prefetchedProd);
-    let pageCount = this.state.page + 1;
-    let itemCount = this.state.items + 10;
-
-    this.props.setProducts(iteratedData);
-
-    if(this.state.items % 20 === 0){
-      let getId = Math.floor(Math.random()*1000);
-      if(this.state.currentImageID === getId){
-        this.setState({
-          currentImageID: Math.floor(Math.random()*1000)
-        })
-      }else{
-        this.setState({
-          currentImageID: getId
-        })
-      }
-    }
-
-    api.get(`${allProducts}?_page=${pageCount}&_limit=10${this.state.sortOrder}`)
-    .then((response)=>{
-      if(response.ok){
-        this.props.setPrefetchedProducts(response.data)
-        this.setState({
-          prefetchedProducts: response.data,
-          page: pageCount,
-          items: itemCount
-        })
-      }else{
-        Alert.alert('Server connection error');
-      }
+    if(this.state.maxItems !== products.length){
       this.setState({
-        isLoadingVisible: false
+        isLoadingVisible: true
       });
-    }).catch((error)=>{
-      console.log(error);
-    })
+
+      let currentProd = products;
+      let prefetchedProd = prefetchedProducts;
+
+      this.props.setProducts([]);
+      this.props.setPrefetchedProducts([]);
+
+      let iteratedData = products.concat(prefetchedProd);
+      let pageCount = this.state.page + 1;
+      let itemCount = this.state.items + this.state.itemLimit;
+
+      this.props.setProducts(iteratedData);
+
+      if(this.state.items % 20 === 0){
+        let getId = Math.floor(Math.random()*1000);
+        if(this.state.currentImageID === getId){
+          this.setState({
+            currentImageID: Math.floor(Math.random()*1000)
+          })
+        }else{
+          this.setState({
+            currentImageID: getId
+          })
+        }
+      }
+
+      api.get(`${allProducts}?_page=${pageCount}&_limit=${this.state.itemLimit}
+        ${this.state.sortOrder}`)
+      .then((response)=>{
+        if(response.ok){
+          this.props.setPrefetchedProducts(response.data)
+          this.setState({
+            prefetchedProducts: response.data,
+            page: pageCount,
+            items: itemCount
+          })
+        }else{
+          Alert.alert('Server connection error');
+        }
+        this.setState({
+          isLoadingVisible: false
+        });
+      }).catch((error)=>{
+        console.log(error);
+      })
+    }else{
+      this.setState({
+        endOfArray: true
+      })
+    }
   }
 
   onSort = (order) => {
@@ -133,15 +151,37 @@ class Main extends React.Component{
     this.initialLoad(order)
   }
 
+  formatDate(dateInput){
+    let itemDate = new Date(dateInput);
+    let dateNow = new Date();
+    let timeDiff = Math.abs(dateNow.getTime() - itemDate.getTime());
+    let diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    let month = itemDate.getMonth();
+    let date = itemDate.getDate();
+    let year = itemDate.getFullYear();
+    let formattedDate = ''
+
+    let months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+      'Sep', 'Oct', 'Nov', 'Dec'];
+
+    if(diffDays > 6){
+      formattedDate = `${months[month]} ${date} ,${year}`
+    }else{
+      formattedDate = `${diffDays} days ago`
+    }
+    return formattedDate;
+  }
+
   render(){
     return(
       <Container>
         {
           (this.state.isLoading)
           ?
-            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <View style={styles.spinnerContainer}>
               <Spinner/>
-              <Text style={{fontSize: 18, fontWeight:'bold'}}>Please wait...</Text>
+              <Text style={styles.spinnerText}>Please wait...</Text>
             </View>
           :
             <Container>
@@ -149,33 +189,33 @@ class Main extends React.Component{
                 onRequestClose={() => {Alert.alert('Modal has been closed.');}}
                 visible={this.state.isLoadingVisible}
                 transparent={true}>
-                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                <View style={styles.transparentView1}/>
 
-                <View style={{flex:0.5, flexDirection: 'row'}}>
-                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-                  <View style={{flex:4, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center'}}>
+                <View style={styles.loadingModal}>
+                  <View style={styles.transparentView1}/>
+                  <View style={styles.transparentLoadingContainer}>
                     <Spinner/>
-                    <Text style={{fontSize: 18}}>Loading...</Text>
+                    <Text style={styles.spinnerText}>Loading...</Text>
                   </View>
-                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                  <View style={styles.transparentView1}/>
                 </View>
 
-                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                <View style={styles.transparentView1}/>
               </Modal>
 
               <Modal
                 onRequestClose={() => {Alert.alert('Modal has been closed.');}}
                 visible={this.state.isMenuVisible}
                 transparent={true}>
-                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                <View style={styles.transparentView1}/>
 
-                <View style={{flex:1, flexDirection: 'row'}}>
-                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
-                  <View style={{flex:5, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', padding: 8}}>
+                <View style={styles.sortingModal}>
+                  <View style={styles.transparentView1}/>
+                  <View style={styles.sortingOptionsContainer}>
                     <Button
                       light
                       full
-                      style={{margintBottom: 8, marginTop: 8}}
+                      style={styles.sortingButtons}
                       onPress={()=>this.onSort('price')}>
                       <Text>By price</Text>
                     </Button>
@@ -183,7 +223,7 @@ class Main extends React.Component{
                     <Button
                       light
                       full
-                      style={{margintBottom: 8, marginTop: 8}}
+                      style={styles.sortingButtons}
                       onPress={()=>this.onSort('size')}>
                       <Text>By size</Text>
                     </Button>
@@ -191,16 +231,14 @@ class Main extends React.Component{
                     <Button
                       light
                       full
-                      style={{margintBottom: 8, marginTop: 8}}
+                      style={styles.sortingButtons}
                       onPress={()=>this.onSort('id')}>
                       <Text>By id</Text>
                     </Button>
-
                   </View>
-                  <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                  <View style={styles.transparentView1}/>
                 </View>
-
-                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                <View style={styles.transparentView1}/>
               </Modal>
 
               <Header>
@@ -217,42 +255,43 @@ class Main extends React.Component{
                       })
                     }}>
                     <Image
-                      style={{width: 30, height: 30}}
+                      style={styles.menuImage}
                       source={require('@assets/sort.png')}
                     />
                   </Button>
                 </Right>
               </Header>
-              <View style={{padding: 8}}>
-                <View style={{borderBottomWidth: StyleSheet.hairlineWidth}}>
-                  <Text style={{textAlign: 'center'}}>
+              <View style={styles.headerContainer}>
+                <View style={styles.headerMessageContainer}>
+                  <Text style={styles.headerMessage}>
                     Here you're sure to find a bargain on some of the finest
                     ascii available to purchase. Be sure to peruse our selection
                     of ascii faces in an exciting range of sizes and prices.
                   </Text>
-                  <Text style={{textAlign: 'center'}}>
+                  <Text style={styles.headerMessage}>
                     But first, a word from our sponsors:
                   </Text>
                 </View>
-                <View style={{marginTop: 8, marginBottom: 8, alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth}}>
+                <View style={styles.imageContainer}>
                   <Image
-                    style={{width: 100, height: 75, marginBottom: 8}}
-                    source={{uri: `${baseURL}${getImage}${this.state.currentImageID}`}}
+                    style={styles.bannerImage}
+                    source={{uri: `${baseURL}${getImage}
+                    ${this.state.currentImageID}`}}
                   />
                 </View>
               </View>
 
-              <Container style={{alignItems: 'center'}}>
+              <Container style={styles.centeredContent}>
                 <FlatList
                   data={this.props.products.products}
                   renderItem={({item}) => (
-                    <Card style={{height: 250, width: 180, padding: 8, justifyContent: 'space-between'}}>
-                      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+                    <Card style={styles.card}>
+                      <View style={styles.faceView}>
                         <Text style={{fontSize: item.size}}>{item.face}</Text>
                       </View>
-                      <View>
-                        <Text>${parseFloat(item.price).toFixed(2)}</Text>
-                        <Text>{item.date}</Text>
+                      <View style={styles.centeredContent}>
+                        <Text>Price: ${parseFloat(item.price).toFixed(2)}</Text>
+                        <Text>Added: {this.formatDate(item.date)}</Text>
                       </View>
                     </Card>
                   )}
@@ -262,6 +301,14 @@ class Main extends React.Component{
                   keyExtractor={(item, index) => index}
                 />
               </Container>
+              {
+                (this.state.endOfArray)&&
+                <Container style={styles.endContent}>
+                  <Text>
+                    -End of Catalogue-
+                  </Text>
+                </Container>
+              }
             </Container>
         }
       </Container>
