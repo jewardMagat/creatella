@@ -77,11 +77,12 @@ class Main extends React.Component{
   }
 
   componentDidMount(){
-    this.initialLoad();
     let id = Math.floor(Math.random()*1000);
     this.setState({
       currentImageID: id
     })
+    this.initialLoad();
+
   }
 
   onLoadItems = () =>{
@@ -108,7 +109,7 @@ class Main extends React.Component{
         let getId = Math.floor(Math.random()*1000);
         if(this.state.currentImageID === getId){
           this.setState({
-            currentImageID: Math.floor(Math.random()*1000)
+            currentImageID: getId + 1
           })
         }else{
           this.setState({
@@ -275,8 +276,9 @@ class Main extends React.Component{
                 <View style={styles.imageContainer}>
                   <Image
                     style={styles.bannerImage}
-                    source={{uri: `${baseURL}${getImage}
-                    ${this.state.currentImageID}`}}
+                    source={{
+                      uri: `${baseURL}${getImage}${this.state.currentImageID}`
+                    }}
                   />
                 </View>
               </View>
