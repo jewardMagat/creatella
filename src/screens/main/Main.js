@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Image, Alert, FlatList, StyleSheet} from 'react-native';
+import {View, Image, Alert, FlatList, StyleSheet, Modal} from 'react-native';
 import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card, Footer,
   FooterTab, Button} from 'native-base';
 import {api} from '@config/server/Server';
@@ -26,6 +26,7 @@ class Main extends React.Component{
       currentImageID: 0,
       isLoading: true,
       iterateData: false,
+      isLoadingVisible: false
     }
   }
 
@@ -62,6 +63,10 @@ class Main extends React.Component{
 
   onLoadItems = () =>{
     const {products, prefetchedProducts} = this.props.products;
+
+    this.setState({
+      isLoadingVisible: true
+    });
 
     let currentProd = products;
     let prefetchedProd = prefetchedProducts;
@@ -101,8 +106,8 @@ class Main extends React.Component{
         Alert.alert('Server connection error');
       }
       this.setState({
-        isLoading: false
-      })
+        isLoadingVisible: false
+      });
     }).catch((error)=>{
       console.log(error);
     })
@@ -120,6 +125,26 @@ class Main extends React.Component{
             </View>
           :
             <Container>
+              <Modal
+                onRequestClose={() => {Alert.alert('Modal has been closed.');}}
+                visible={this.state.isLoadingVisible}
+                transparent={true}
+              >
+              <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+
+              <View style={{flex:0.5, flexDirection: 'row'}}>
+                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+                <View style={{flex:4, backgroundColor: 'white', justifyContent: 'center', alignItems: 'center'}}>
+                  <Spinner/>
+                  <Text style={{fontSize: 18}}>Loading...</Text>
+                </View>
+                <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+              </View>
+
+              <View style={{flex:1, backgroundColor: 'rgba(52, 52, 52, 0.8)'}}/>
+
+
+              </Modal>
               <Header>
                 <Body>
                   <Title>
