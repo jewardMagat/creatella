@@ -22,7 +22,7 @@ class Main extends React.Component{
       sortOrder: '',
       maxItems: 0,
       endOfArray: false,
-      itemLimit: 20
+      itemLimit: 20 //modify as needed
     }
   }
 
