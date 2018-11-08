@@ -1,6 +1,7 @@
 import React from 'react';
-import {View, Image, Alert, FlatList} from 'react-native';
-import {Container, Content, Text, Spinner, Header, Body, Title, Card} from 'native-base';
+import {View, Image, Alert, FlatList, StyleSheet} from 'react-native';
+import {Container, Content, Text, Spinner, Header, Body, Right, Title, Card, Footer,
+  FooterTab, Button} from 'native-base';
 import {api} from '@config/server/Server';
 import {allProducts, getImage} from '@config/server/UserService';
 import GridView from 'react-native-super-grid';
@@ -22,7 +23,6 @@ class Main extends React.Component{
       prefetchedProducts: [],
       page: 0,
       items: 0,
-      prevImageId: 0,
       currentImageID: 0,
       isLoading: true,
       iterateData: false,
@@ -45,7 +45,8 @@ class Main extends React.Component{
               prefetchedProducts: response.data,
               page: 2,
               items: 10,
-              iterateData: true
+              iterateData: true,
+              currentImageID: id
             })
           }else{
             Alert.alert('Server connection error');
@@ -73,6 +74,20 @@ class Main extends React.Component{
     let itemCount = this.state.items + 10;
 
     this.props.setProducts(iteratedData);
+
+    if(this.state.items % 20 === 0){
+      let getId = Math.floor(Math.random()*1000);
+      if(this.state.currentImageID === getId){
+        this.setState({
+          currentImageID: Math.floor(Math.random()*1000)
+        })
+      }else{
+        this.setState({
+          currentImageID: getId
+        })
+      }
+    }
+
 
     console.log('==============================')
     console.log(pageCount);
@@ -103,21 +118,6 @@ class Main extends React.Component{
     })
   }
 
-
-  renderItem = ({ item, index }) => (
-    <Card style={{height: 200, padding: 8, justifyContent: 'space-between'}}>
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <Text style={{fontSize: item.size}}>{item.face}</Text>
-      </View>
-      <View>
-        <Text>${parseFloat(item.price).toFixed(2)}</Text>
-        <Text>{item.date}</Text>
-      </View>
-    </Card>
-  );
-
-
-
   render(){
     return(
       <Container>
@@ -131,16 +131,38 @@ class Main extends React.Component{
           :
             <Container>
               <Header>
-                <Body style={{flex: 1, alignItems: 'center'}}>
+                <Body>
                   <Title>
-                    Cool Faces
+                    Products Grid
                   </Title>
                 </Body>
+                <Right>
+                  <Button>
+                    <Image
+                      style={{width: 30, height: 30}}
+                      source={require('@assets/sort.png')}
+                    />
+                  </Button>
+                </Right>
               </Header>
-              <Image
-                style={{width: 50, height: 50}}
-                source={{uri: 'http://10.10.1.111:3000/api/ads/?r=13'}}
-              />
+              <View style={{padding: 8}}>
+                <View style={{borderBottomWidth: StyleSheet.hairlineWidth}}>
+                  <Text style={{textAlign: 'center'}}>
+                    Here you're sure to find a bargain on some of the finest
+                    ascii available to purchase. Be sure to peruse our selection
+                    of ascii faces in an exciting range of sizes and prices.
+                  </Text>
+                  <Text style={{textAlign: 'center'}}>
+                    But first, a word from our sponsors:
+                  </Text>
+                </View>
+                <View style={{marginTop: 8, alignItems: 'center'}}>
+                  <Image
+                    style={{width: 100, height: 75}}
+                    source={{uri: `http://10.10.1.111:3000/api/ads/?r=${this.state.currentImageID}`}}
+                  />
+                </View>
+              </View>
 
               <Container style={{alignItems: 'center'}}>
                 <FlatList
@@ -159,7 +181,7 @@ class Main extends React.Component{
                   numColumns={2}
                   onEndReached={this.onLoadItems}
                   onEndReachedThreshold={0.1}
-                  keyExtractor={(item) => `${item.id}_${item.face}_${item.size}_${item.date}`}
+                  keyExtractor={(item, index) => index}
                 />
               </Container>
             </Container>

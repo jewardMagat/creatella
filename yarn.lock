@@ -5148,6 +5148,13 @@ react-native-easy-grid@0.2.0:
   dependencies:
     lodash "^4.11.1"
 
+react-native-grid-list@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/react-native-grid-list/-/react-native-grid-list-1.0.9.tgz#61eaa6df390b3de4fe1d4eb2ba634958d19b7992"
+  integrity sha1-Yeqm3zkLPeT+HU6yumNJWNGbeZI=
+  dependencies:
+    prop-types "^15.6.0"
+
 react-native-iphone-x-helper@^1.0.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/react-native-iphone-x-helper/-/react-native-iphone-x-helper-1.2.0.tgz#9f8a376eb00bc712115abff4420318a0063fa796"
